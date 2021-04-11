@@ -1,5 +1,7 @@
-install.packages("rjson")
-install.packages("data.table")
+# Title: Converting JSON to R dataframes + Figures
+# Author: Alex Bass
+# Date Updated: 11 April 2021
+
 library(rjson)
 library(data.table)
 library(tidyverse)
@@ -186,7 +188,7 @@ full_dataset <- rbindlist(list(comments,posts,friends,reactions),fill = T)
 
 
 #------------------------------------
-#Initial Analysis
+#Facebook usage and emoji figures
 #---------------------------------#
 #fonts
 library(showtext)
@@ -208,9 +210,9 @@ full_dataset %>%
         text = element_text(face = "bold", family = "Cairo"),
         plot.title = element_text(hjust = .5, size = 20, face = "bold"),
         legend.title = element_blank(),
-        plot.caption = element_text(hjust = 1.43, size = 8, face = "italic"))+
+        plot.caption = element_text(size = 8, face = "italic"))+
   labs(caption = "Source: My Personal Data Downloaded From Facebook",
-       title = "My Facebook Usage Over Time")+
+       title = "I Used Facebook More In Recent Years")+
   scale_x_continuous(breaks = c(2008:2021))+
   xlab("Year")+
   ylab("Count")+
@@ -258,26 +260,19 @@ fav_reaction_data %>%
   ylab("Count")+
   xlab("Reaction")+
   labs(caption = "Source: My Personal Data Downloaded From Facebook",
-       title = "My Favorite Reactions")+
+       title = "I Suppose I've Always Loved Love")+
   ggsave("graphOutput/emoji.png", device = "png", width = 15, height = 13, units = "cm")
 
-#Figure with inner and outer circle of friends
-#Top 3 friends
 
-
-#make list of friends
-#match names in these two table of list of friends
-#sort by recency of reactions / or weight by recency
-#try and calculate a recency score in these tables
-
-#I should search comments and posts for friends names as a third table
 
 list_of_friends <- as_vector(full_dataset %>% 
   filter(type == "friend") %>% 
   select(friends.name))
 names(list_of_friends) <- NULL
 
-
+#------------------------------------
+#Finding Best Friends
+#---------------------------------#
 
 in_post_interactions <- sapply(list_of_friends, function(x){
   comment <- sum(grepl(x,full_dataset$comments.data.comment.comment))
@@ -331,7 +326,9 @@ wordcloud(words = wc$friend_name, freq = wc$count, min.freq = 1,
           max.words=100, random.order=FALSE, rot.per=0.35, 
           colors=brewer.pal(8, "Dark2"), scale = c(1.6,.3))
 
+#------------------------------------
 #Exploring Sentiment Analysis
+#---------------------------------#
 library(SentimentAnalysis)
 
 sent <- analyzeSentiment(full_dataset$posts)
@@ -361,66 +358,3 @@ data.frame(a=factor(convertToDirection(sent$SentimentQDAP))) %>%
   scale_y_continuous(labels = scales::percent)+
   ylab("Percent")+
   ggsave("graphOutput/sentiment.png", device = "png", width = 18, height = 8, units = "cm")
-
-font_add_google("Cairo", family = "Cairo")
-showtext_auto()
-fav_reaction_data %>% 
-  mutate(reaction = reorder(factor(reactions.data.reaction.reaction),n,sum)) %>% 
-  ggplot()+
-  geom_bar(aes(reaction,n),stat="identity", fill = "skyblue3", width = .8)+
-  geom_image(aes(reaction,-15 ,image = image), size = .05)+
-  coord_flip()+
-  theme_minimal()+
-  theme(panel.grid.major.y = element_blank(),
-        axis.text.y = element_blank(),
-        axis.title.y = element_blank(),
-        axis.text.x = element_text(size = 14),
-        axis.title.x = element_text(size = 16),
-        text = element_text(face = "bold", family = "Cairo"),
-        plot.caption = element_text(size = 8, face = "italic"),
-        plot.title = element_text(hjust = .5, size = 20, face = "bold"))+
-  ylab("Count")+
-  xlab("Reaction")+
-  labs(caption = "Source: My Personal Data Downloaded From Facebook",
-       title = "My Favorite Reactions")+
-  ggsave("graphOutput/emoji.png", device = "png", width = 10, height = 10, units = "cm")
-
-
-  
-#numbers for proportion lables
-data.frame(a=convertToDirection(sent$SentimentQDAP)) %>% 
-  mutate(b = "b") %>% 
-  count(a) %>% 
-  mutate(prop = n/sum(n))
-
-#Guess top 3 or 5 friends / 5 more notable mentions
-
-#Give a favorite page?
-
-#How do I create a friend score?
-#Reactions + Comments + Posts
-
-#Goal: Build a monetized app that gives people analytics of their FB data
-
-## PIPELINE PROCESS:
-#Download data
-#Connect account to get friends profile pictures
-#Create image using ggplot of friends circle
-
-## PREMIUM FEATURES:
-#It would be awesome if I had...
-#FB emojis you use the most
-#Figure with inner and outer circle of friends
-#Sentiment analysis of posts
-#List of people you sent friend requests but didn't accept
-
-#List of best facebook friends - word cloud
-#Activity on FB over time
-#Friends over time
-#Sentiment analysis of facebook posts (words)
-##Are you posting happy, sad, excited, scared, unsure?
-#Most used emoji
-
-#need to make sure to visualize this in exciting ways
-
-#I should create a master dataset with friends, comments and interactions
